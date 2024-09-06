@@ -1,12 +1,3 @@
-const std = @import("std");
-
-export fn cycle_type_validate(bytes: Slice(u8)) bool {
-    var arena = std.heap.ArenaAllocator.init(std.heap.c_allocator);
-    defer arena.deinit();
-    _ = readType(arena.allocator(), bytes.toZigSlice()) catch return false;
-    return true;
-}
-
 pub const Type = extern struct {
     name: Slice(u8),
     def: TypeDef,
@@ -56,25 +47,6 @@ pub const TypeDef = extern struct {
     };
 
     pub const Data = extern union {
-        void: void,
-
-        i8: void,
-        i16: void,
-        i32: void,
-        i64: void,
-
-        u8: void,
-        u16: void,
-        u32: void,
-        u64: void,
-
-        f32: void,
-        f64: void,
-
-        bool: void,
-        str: void,
-        ref: void,
-
         optional: Optional,
         array: Array,
         list: List,
@@ -387,9 +359,9 @@ fn readTypeDef(allocator: std.mem.Allocator, reader: anytype) !TypeDef {
             }
             data = .{ .@"union" = .{ .fields = Slice(TypeDef.UnionField).fromZigSlice(fields) } };
         },
-        inline else => |comptime_tag| {
+        inline else => {
             // void, i8, i16, i32, i64, u8, u16, u32, u64, f32, f64, bool, str, ref
-            data = @unionInit(TypeDef.Data, @tagName(comptime_tag), undefined);
+            data = undefined;
         },
     }
     return TypeDef{
@@ -444,7 +416,6 @@ pub fn writeType(writer: anytype, t: Type) Error!void {
 fn writeTypeDef(writer: anytype, def: TypeDef) !void {
     try writer.writeInt(u8, @intFromEnum(def.tag), .big);
     switch (def.tag) {
-        .void, .i8, .i16, .i32, .i64, .u8, .u16, .u32, .u64, .f32, .f64, .bool, .str, .ref => {},
         .optional => {
             try writeTypeDef(writer, def.data.optional.child.*);
         },
@@ -486,6 +457,7 @@ fn writeTypeDef(writer: anytype, def: TypeDef) !void {
                 try writeTypeDef(writer, field.type);
             }
         },
+        else => {},
     }
 }
 
@@ -563,6 +535,9 @@ fn validateFieldName(slice: Slice(u8)) bool {
     }
     return true;
 }
+
+const std = @import("std");
+const c_allocator = std.heap.c_allocator;
 
 test "basic types ser/de" {
     try testTypeSerDe(.{ .tag = .void, .data = undefined });

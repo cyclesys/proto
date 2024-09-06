@@ -1,24 +1,28 @@
 use std::env;
-use std::path::Path;
 use std::process::Command;
 
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let target = env::var("TARGET").unwrap();
 
+    let target = match target.as_str() {
+        "aarch64-apple-darwin" => "aarch64-macos-none",
+        _ => {
+            return;
+        }
+    };
+
     Command::new("zig")
         .args([
             "build",
-            "--prefix-lib-dir",
+            "--prefix",
             &out_dir,
-            "-O",
-            "ReleaseSafe",
-            "-target",
-            &target,
+            "-Doptimize=ReleaseSafe",
+            &format!("-Dtarget={target}"),
         ])
         .status()
         .expect("failed to compile zig lib");
 
-    println!("cargo::rustc-link-search=native={out_dir}");
+    println!("cargo::rustc-link-search=native={out_dir}/lib/");
     println!("cargo::rustc-link-lib=static=cycleproto");
 }
