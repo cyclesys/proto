@@ -8,7 +8,7 @@ fn main() {
     let target = match target.as_str() {
         "aarch64-apple-darwin" => "aarch64-macos-none",
         _ => {
-            return;
+            panic!("unsupported target");
         }
     };
 
@@ -25,4 +25,6 @@ fn main() {
 
     println!("cargo::rustc-link-search=native={out_dir}/lib/");
     println!("cargo::rustc-link-lib=static=cycleproto");
+
+    tonic_build::compile_protos("src/cycle.proto").unwrap();
 }

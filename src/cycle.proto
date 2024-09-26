@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package cycle;
+
+service Store {
+
+    // Returns a list of root object ids
+    rpc GetRootIds (GetRootIdsRequest) returns (GetRootIdsResponse) {}
+
+    rpc GetType (GetTypeRequest) returns (GetTypeResponse) {}
+
+    rpc GetObject (GetObjectRequest) returns (GetObjectResponse) {}
+}
+
+message ObjectId {
+    int64 user_id = 1;
+    int64 obj_id = 2;
+}
+
+message AuthRequest {
+    string token = 1;
+}
+
+message AuthResponse {
+    optional string new_token = 1;
+}
+
+message GetRootIdsRequest {
+    AuthRequest auth = 1;
+}
+
+message GetRootIdsResponse {
+    AuthResponse auth = 1;
+    int64 user_id = 2;
+    repeated int64 ids = 3;
+}
+
+message GetObjectRequest {
+    AuthRequest auth = 1;
+    ObjectId id = 2;
+}
+
+message GetObjectResponse {
+    AuthResponse auth = 1;
+    
+    // the sha256 hash of the serialized type
+    bytes type = 2;
+
+    // the object data
+    bytes data = 3;
+}
+
+message GetTypeRequest {
+    AuthRequest auth = 1;
+
+    // the sha256 hash of the serialized type
+    bytes hash = 2;
+}
+
+message GetTypeResponse {
+    AuthResponse auth = 1;
+
+    // the serialized type
+    bytes data = 2;
+}
